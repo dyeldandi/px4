@@ -1,10 +1,12 @@
 #!nsh
 #
-# Generic 10” Quad + geometry
+# Generic 10" Quad + geometry
 #
 # Anton Babushkin <anton.babushkin@me.com>
 #
 
-sh /etc/init.d/4001_quad_x
+sh /etc/init.d/rc.mc_defaults
 
 set MIXER FMU_quad_+
+
+set PWM_OUTPUTS 1234

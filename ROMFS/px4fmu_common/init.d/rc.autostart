@@ -68,6 +68,12 @@ then
 	set MODE custom
 fi
 
+if param compare SYS_AUTOSTART 2103 103
+then
+        sh /etc/init.d/2103_skyhunter_1800
+        set MODE custom
+fi
+
 #
 # Flying wing
 #
@@ -97,6 +103,11 @@ then
 	sh /etc/init.d/3034_fx79
 fi
 
+if param compare SYS_AUTOSTART 3100
+then
+	sh /etc/init.d/3100_tbs_caipirinha
+fi
+
 #
 # Quad X
 #
@@ -104,6 +115,15 @@ fi
 if param compare SYS_AUTOSTART 4001
 then
 	sh /etc/init.d/4001_quad_x
+fi
+
+#
+# ARDrone
+#
+
+if param compare SYS_AUTOSTART 4008 8
+then
+    sh /etc/init.d/4008_ardrone
 fi
 
 if param compare SYS_AUTOSTART 4010 10
@@ -114,11 +134,6 @@ fi
 if param compare SYS_AUTOSTART 4011 11
 then
 	sh /etc/init.d/4011_dji_f450
-fi
-
-if param compare SYS_AUTOSTART 4012 12
-then
-	sh /etc/init.d/4012_hk_x550
 fi
 
 #
@@ -178,6 +193,15 @@ fi
 if param compare SYS_AUTOSTART 10016 16
 then
 	sh /etc/init.d/10016_3dr_iris
+fi
+
+#
+# Hexa Coaxial
+#
+
+if param compare SYS_AUTOSTART 11001
+then
+	sh /etc/init.d/11001_hexa_cox
 fi
 
 #
