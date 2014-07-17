@@ -46,6 +46,7 @@
 #include <stdbool.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <math.h>
 #include <sys/stat.h>
 
 #include <arch/board/board.h>
@@ -62,7 +63,7 @@ static void	do_import(const char* param_file_name);
 static void	do_show(const char* search_string);
 static void	do_show_print(void *arg, param_t param);
 static void	do_set(const char* name, const char* val, bool fail_on_not_found);
-static void	do_compare(const char* name, const char* vals[], unsigned comparisons);
+static void	do_compare(const char* name, char* vals[], unsigned comparisons);
 static void	do_reset(void);
 static void	do_reset_nostart(void);
 
@@ -228,9 +229,8 @@ do_show_print(void *arg, param_t param)
 	if (!(arg == NULL)) {
 
 		/* start search */
-		char *ss = search_string;
-		char *pp = p_name;
-		bool mismatch = false;
+		const char *ss = search_string;
+		const char *pp = p_name;
 
 		/* XXX this comparison is only ok for trailing wildcards */
 		while (*ss != '\0' && *pp != '\0') {
@@ -351,7 +351,7 @@ do_set(const char* name, const char* val, bool fail_on_not_found)
 }
 
 static void
-do_compare(const char* name, const char* vals[], unsigned comparisons)
+do_compare(const char* name, char* vals[], unsigned comparisons)
 {
 	int32_t i;
 	float f;

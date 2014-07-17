@@ -1,7 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2013 PX4 Development Team. All rights reserved.
- *   Author: 	Lorenz Meier
+ *   Copyright (c) 2013, 2014 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -120,10 +119,18 @@ public:
 	 */
 	int		start();
 
+	/**
+	 * Task status
+	 *
+	 * @return	true if the mainloop is running
+	 */
+	bool		task_running() { return _task_running; }
+
 private:
 	int		_mavlink_fd;
 
 	bool		_task_should_exit;		/**< if true, sensor task should exit */
+	bool		_task_running;			/**< if true, task is running in its mainloop */
 	int		_control_task;			/**< task handle for sensor task */
 
 	int		_global_pos_sub;
@@ -391,13 +398,14 @@ namespace l1_control
 #endif
 static const int ERROR = -1;
 
-FixedwingPositionControl	*g_control;
+FixedwingPositionControl	*g_control = nullptr;
 }
 
 FixedwingPositionControl::FixedwingPositionControl() :
 
 	_mavlink_fd(-1),
 	_task_should_exit(false),
+	_task_running(false),
 	_control_task(-1),
 
 /* subscriptions */
@@ -413,6 +421,17 @@ FixedwingPositionControl::FixedwingPositionControl() :
 /* publications */
 	_attitude_sp_pub(-1),
 	_nav_capabilities_pub(-1),
+
+	_att(),
+	_att_sp(),
+	_nav_capabilities(),
+	_manual(),
+	_airspeed(),
+	_control_mode(),
+	_global_pos(),
+	_pos_sp_triplet(),
+	_sensor_combined(),
+	_range_finder(),
 
 /* performance counters */
 	_loop_perf(perf_alloc(PC_ELAPSED, "fw l1 control")),
@@ -433,18 +452,8 @@ FixedwingPositionControl::FixedwingPositionControl() :
 	_airspeed_valid(false),
 	_groundspeed_undershoot(0.0f),
 	_global_pos_valid(false),
-	_att(),
-	_att_sp(),
-	_nav_capabilities(),
-	_manual(),
-	_airspeed(),
-	_control_mode(),
-	_global_pos(),
-	_pos_sp_triplet(),
-	_sensor_combined(),
 	_mTecs(),
-	_was_pos_control_mode(false),
-	_range_finder()
+	_was_pos_control_mode(false)
 {
 	_nav_capabilities.turn_distance = 0.0f;
 
@@ -806,12 +815,8 @@ FixedwingPositionControl::control_position(const math::Vector<2> &current_positi
 
 	float eas2tas = 1.0f; // XXX calculate actual number based on current measurements
 
-	// XXX re-visit
-	float baro_altitude = _global_pos.alt;
-
 	/* filter speed and altitude for controller */
 	math::Vector<3> accel_body(_sensor_combined.accelerometer_m_s2);
-	math::Vector<3> accel_earth = _R_nb * accel_body;
 
 	float altitude_error = _pos_sp_triplet.current.alt - _global_pos.alt;
 
@@ -944,8 +949,7 @@ FixedwingPositionControl::control_position(const math::Vector<2> &current_positi
 			float airspeed_land = 1.3f * _parameters.airspeed_min;
 			float airspeed_approach = 1.3f * _parameters.airspeed_min;
 
-			/* Calculate distance (to landing waypoint) and altitude of last ordinary waypoint L */
-			float L_wp_distance = get_distance_to_next_waypoint(prev_wp(0), prev_wp(1), curr_wp(0), curr_wp(1));
+			/* Calculate altitude of last ordinary waypoint L */
 			float L_altitude_rel = _pos_sp_triplet.previous.valid ? _pos_sp_triplet.previous.alt - _pos_sp_triplet.current.alt : 0.0f;
 
 			float bearing_airplane_currwp = get_bearing_to_next_waypoint(current_position(0), current_position(1), curr_wp(0), curr_wp(1));
@@ -1294,6 +1298,8 @@ FixedwingPositionControl::task_main()
 	fds[1].fd = _global_pos_sub;
 	fds[1].events = POLLIN;
 
+	_task_running = true;
+
 	while (!_task_should_exit) {
 
 		/* wait for up to 500ms for data */
@@ -1394,6 +1400,8 @@ FixedwingPositionControl::task_main()
 		perf_end(_loop_perf);
 	}
 
+	_task_running = false;
+
 	warnx("exiting.\n");
 
 	_control_task = -1;
@@ -1449,7 +1457,7 @@ FixedwingPositionControl::start()
 	_control_task = task_spawn_cmd("fw_pos_control_l1",
 				       SCHED_DEFAULT,
 				       SCHED_PRIORITY_MAX - 5,
-				       4048,
+				       2000,
 				       (main_t)&FixedwingPositionControl::task_main_trampoline,
 				       nullptr);
 
@@ -1481,6 +1489,14 @@ int fw_pos_control_l1_main(int argc, char *argv[])
 			l1_control::g_control = nullptr;
 			err(1, "start failed");
 		}
+
+		/* avoid memory fragmentation by not exiting start handler until the task has fully started */
+		while (l1_control::g_control == nullptr || !l1_control::g_control->task_running()) {
+			usleep(50000);
+			printf(".");
+			fflush(stdout);
+		}
+		printf("\n");
 
 		exit(0);
 	}
