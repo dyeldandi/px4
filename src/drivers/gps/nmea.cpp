@@ -66,7 +66,7 @@ char*  scanFloat64(const char *pos, int8_t sign, int8_t n_max_int, int8_t n_max_
      pos++;
      while(*pos >= '0' && *pos <= '9')
      {
-        f = f*(10.0) + (float32_t)(*(pos++) - '0');
+        f = f*(10.0) + (float64_t)(*(pos++) - '0');
         div *= (0.1);
         n++;
         if(n_max_frac>0 && n==n_max_frac) break;
@@ -159,9 +159,9 @@ int NMEA::handle_message(int len){
     Note - If a user-defined geoid model, or an inclined
   */
       float64_t nmea_time = 0.0, lat = 0.0, lon = 0.0, alt = 0.0;
-      int num_of_sv = 0, fix_quality=0, dgps_time = 0, dgps_baseid=0;
+      int num_of_sv = 0, fix_quality=0; //, dgps_time = 0, dgps_baseid=0;
       float64_t hdop = 99.9;
-      float64_t height_of_Geoid = 0.0;      
+      //float64_t height_of_Geoid = 0.0;
       char ns = '?', ew = '?';
 
       if(bufptr && *(++bufptr) != ',') bufptr = scanFloat64(bufptr, 0, 9, 9,&nmea_time);
@@ -253,10 +253,10 @@ Example $PASHR,POS,2,10,125410.00,5525.8138702,N,03833.9587380,E,131.555,1.0,0.0
       */
       bufptr = (char*)( _rx_buffer+10);
       float64_t nmea_time = 0.0, lat = 0.0, lon = 0.0, alt = 0.0;
-      int num_of_sv = 0, fix_quality=0, dgps_baseid=0;
+      int num_of_sv = 0, fix_quality=0;// dgps_baseid=0;
       float64_t track_true = 0.0, ground_speed = 0.0 , age_of_corr = 0.0;
       float64_t hdop = 99.9, vdop = 99.9,  pdop = 99.9, tdop = 99.9,vertic_vel = 0.0;
-      float64_t height_of_Geoid = 0.0;      
+      //float64_t height_of_Geoid = 0.0;
       char ns = '?', ew = '?';
 
       if(bufptr && *(++bufptr) != ',') bufptr = str_scanDec(bufptr, 0, 9, &fix_quality);
@@ -395,7 +395,7 @@ Example $PASHR,POS,2,10,125410.00,5525.8138702,N,03833.9587380,E,131.555,1.0,0.0
     8   K: speed over ground is measured in kph
     9   The checksum data, always begins with *
   */
-     float64_t track_true = 0.0, track_magnetic = 0.0, speed = 0.0, ground_speed = 0.0;
+     /*float64_t track_true = 0.0, speed = 0.0, track_magnetic = 0.0, ground_speed = 0.0;
      char true_north = '?', magnetic_north = '?', speed_in_knots = '?', speed_in_kph  = '?';
      
      if(bufptr && *(++bufptr) != ',') bufptr = scanFloat64(bufptr, 0, 9, 9,&track_true);
@@ -408,9 +408,9 @@ Example $PASHR,POS,2,10,125410.00,5525.8138702,N,03833.9587380,E,131.555,1.0,0.0
      if(bufptr && *(++bufptr) != ',') speed_in_kph = *(bufptr++);
 
      const float64_t dPI  = 3.14159265;
-		 float64_t tan_C = tan(track_true * dPI / 180.0);              
-		 float64_t lat_ = sqrt(ground_speed*ground_speed/ (1+tan_C)); //km/hour
-		 float64_t lon_ = lat_*tan_C; //		 	                        //km/hour
+		   float64_t tan_C = tan(track_true * dPI / 180.0);
+		   float64_t lat_ = sqrt(ground_speed*ground_speed/ (1+tan_C)); //km/hour
+		   float64_t lon_ = lat_*tan_C; //		 	                        //km/hour*/
   }
   else if((memcmp(_rx_buffer+3, "GSV,",3) == 0)){
   /*
@@ -519,9 +519,9 @@ Example $PASHR,POS,2,10,125410.00,5525.8138702,N,03833.9587380,E,131.555,1.0,0.0
     float64_t nmea_sec = nmea_time - nmea_hour*10000 - nmea_minute*100;
     //convert to unix timestamp
     struct tm timeinfo;
-    timeinfo.tm_year = 2013 - 1900;
-    timeinfo.tm_mon = 7 - 1; //7(July)
-    timeinfo.tm_mday = 11;
+    timeinfo.tm_year = year - 1900;
+    timeinfo.tm_mon = month - 1; //7(July)
+    timeinfo.tm_mday = day;
     timeinfo.tm_hour = nmea_hour;
     timeinfo.tm_min = nmea_minute;
     timeinfo.tm_sec = int(nmea_sec);

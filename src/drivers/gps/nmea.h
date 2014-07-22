@@ -56,9 +56,9 @@ class NMEA : public GPS_Helper
 		NME_DECODE_GOT_FIRST_CS_BYTE
 	};
 
-	struct vehicle_gps_position_s *_gps_position;
-	struct satellite_info_s *_satellite_info;
 	int                    _fd;
+	struct satellite_info_s *_satellite_info;
+	struct vehicle_gps_position_s *_gps_position;
 	int nmealog_fd;//miklm
 
 	nmea_decode_state_t   _decode_state;
