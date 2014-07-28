@@ -120,7 +120,55 @@ int NMEA::handle_message(int len){
     if(_rx_buffer[i] == ',')uiCalcComma++;
   }
   char* bufptr = (char*)( _rx_buffer+6);
-  if((memcmp(_rx_buffer+3, "GGA,",3) == 0)&&(uiCalcComma == 14)){    
+
+  if((memcmp(_rx_buffer+3, "ZDA,",3) == 0)&&(uiCalcComma == 6)){
+      /*
+      UTC day, month, and year, and local time zone offset
+      An example of the ZDA message string is:
+
+      $GPZDA,172809.456,12,07,1996,00,00*45
+
+      ZDA message fields
+      Field	Meaning
+      0	Message ID $GPZDA
+      1	UTC
+      2	Day, ranging between 01 and 31
+      3	Month, ranging between 01 and 12
+      4	Year
+      5	Local time zone offset from GMT, ranging from 00 through ï¿½13 hours
+      6	Local time zone offset from GMT, ranging from 00 through 59 minutes
+      7	The checksum data, always begins with *
+      Fields 5 and 6 together yield the total offset. For example, if field 5 is -5 and field 6 is +15, local time is 5 hours and 15 minutes earlier than GMT.
+      */
+      float64_t nmea_time = 0.0;
+      int day = 0, month = 0,year = 0,local_time_off_hour = 0,local_time_off_min = 0;
+      if(bufptr && *(++bufptr) != ',') bufptr = scanFloat64(bufptr, 0, 9, 9,&nmea_time);
+      if(bufptr && *(++bufptr) != ',') bufptr = str_scanDec(bufptr, 0, 9, &day);
+      if(bufptr && *(++bufptr) != ',') bufptr = str_scanDec(bufptr, 0, 9, &month);
+      if(bufptr && *(++bufptr) != ',') bufptr = str_scanDec(bufptr, 0, 9, &year);
+      if(bufptr && *(++bufptr) != ',') bufptr = str_scanDec(bufptr, 0, 9, &local_time_off_hour);
+      if(bufptr && *(++bufptr) != ',') bufptr = str_scanDec(bufptr, 0, 9, &local_time_off_min);
+
+
+      int nmea_hour = nmea_time/10000;
+      int nmea_minute = (nmea_time - nmea_hour*10000)/100;
+      float64_t nmea_sec = nmea_time - nmea_hour*10000 - nmea_minute*100;
+      //convert to unix timestamp
+      struct tm timeinfo;
+      timeinfo.tm_year = year - 1900;
+      timeinfo.tm_mon = month - 1; //7(July)
+      timeinfo.tm_mday = day;
+      timeinfo.tm_hour = nmea_hour;
+      timeinfo.tm_min = nmea_minute;
+      timeinfo.tm_sec = int(nmea_sec);
+      time_t epoch = mktime(&timeinfo);
+
+      _gps_position->time_gps_usec = (uint64_t)epoch * 1000000; //TODO: test this
+      _gps_position->time_gps_usec += (uint64_t)((nmea_sec - int(nmea_sec)) * 1e6);
+      _gps_position->timestamp_time = hrt_absolute_time();
+    }
+
+  else if((memcmp(_rx_buffer+3, "GGA,",3) == 0)&&(uiCalcComma == 14)){
   /* 
     Time, position, and fix related data
     An example of the GBS message string is:
@@ -190,23 +238,6 @@ int NMEA::handle_message(int len){
       else
         _gps_position->fix_type = 3;
 	    _gps_position->timestamp_position = hrt_absolute_time();
-
-      int nmea_hour = nmea_time/10000;
-      int nmea_minute = (nmea_time - nmea_hour*10000)/100;
-      float64_t nmea_sec = nmea_time - nmea_hour*10000 - nmea_minute*100;
-      //convert to unix timestamp
-      struct tm timeinfo;
-      timeinfo.tm_year = 2013 - 1900;
-      timeinfo.tm_mon = 7 - 1; //7(July)
-      timeinfo.tm_mday = 11;
-      timeinfo.tm_hour = nmea_hour;
-      timeinfo.tm_min = nmea_minute;
-      timeinfo.tm_sec = int(nmea_sec);
-      time_t epoch = mktime(&timeinfo);
-
-      _gps_position->time_gps_usec = (uint64_t)epoch * 1000000; //TODO: test this
-      _gps_position->time_gps_usec += (uint64_t)((nmea_sec - int(nmea_sec)) * 1e6);
-      _gps_position->timestamp_time = hrt_absolute_time();
 
       _gps_position->eph = hdop;     
       _gps_position->epv = hdop*1.5; //Just to work (empirical);
@@ -294,23 +325,6 @@ Example $PASHR,POS,2,10,125410.00,5525.8138702,N,03833.9587380,E,131.555,1.0,0.0
 	    _gps_position->timestamp_position = hrt_absolute_time();
 
       _gps_position->fix_quality = fix_quality;
-
-      int nmea_hour = nmea_time/10000;
-      int nmea_minute = (nmea_time - nmea_hour*10000)/100;
-      float64_t nmea_sec = nmea_time - nmea_hour*10000 - nmea_minute*100;
-      //convert to unix timestamp
-      struct tm timeinfo;
-      timeinfo.tm_year = 2013 - 1900;
-      timeinfo.tm_mon = 7 - 1; //7(July)
-      timeinfo.tm_mday = 11;
-      timeinfo.tm_hour = nmea_hour;
-      timeinfo.tm_min = nmea_minute;
-      timeinfo.tm_sec = int(nmea_sec);
-      time_t epoch = mktime(&timeinfo);
-
-      _gps_position->time_gps_usec = (uint64_t)epoch * 1000000; //TODO: test this
-      _gps_position->time_gps_usec += (uint64_t)((nmea_sec - int(nmea_sec)) * 1e6);
-      _gps_position->timestamp_time = hrt_absolute_time();
 
       _gps_position->eph = hdop;     
       _gps_position->epv = vdop;
@@ -425,8 +439,8 @@ Example $PASHR,POS,2,10,125410.00,5525.8138702,N,03833.9587380,E,131.555,1.0,0.0
     2   Message number
     3   Total number of SVs visible
     4   SV PRN number
-    5   Elevation, in degrees, 90° maximum
-    6   Azimuth, degrees from True North, 000° through 359°
+    5   Elevation, in degrees, 90ï¿½ maximum
+    6   Azimuth, degrees from True North, 000ï¿½ through 359ï¿½
     7   SNR, 00 through 99 dB (null when not tracking)
     8-11    Information about second SV, same format as fields 4 through 7
     12-15   Information about third SV, same format as fields 4 through 7
@@ -457,7 +471,7 @@ Example $PASHR,POS,2,10,125410.00,5525.8138702,N,03833.9587380,E,131.555,1.0,0.0
       return 0;
     }
     if((this_msg_num == 0)&&(bGPS == true)){
-      memset(_satellite_info->svid,      0,sizeof(_satellite_info->svid));
+      memset(_satellite_info->svid,     0,sizeof(_satellite_info->svid));
       memset(_satellite_info->used,     0,sizeof(_satellite_info->used));
       memset(_satellite_info->snr,      0,sizeof(_satellite_info->snr));
       memset(_satellite_info->elevation,0,sizeof(_satellite_info->elevation));
@@ -466,10 +480,10 @@ Example $PASHR,POS,2,10,125410.00,5525.8138702,N,03833.9587380,E,131.555,1.0,0.0
 
     int end = 4;
     if(this_msg_num == all_msg_num){
-      end =  tot_sv_visible - (this_msg_num-1)*4;
+    end =  tot_sv_visible - (this_msg_num-1)*4;
       //_gps_position->satellite_info_available = 1;
-      _gps_position->satellites_used = this_msg_num;
-      _satellite_info->count = tot_sv_visible;
+      _gps_position->satellites_used = tot_sv_visible;
+      _satellite_info->count = SAT_INFO_MAX_SATELLITES;
       _satellite_info->timestamp = hrt_absolute_time();
     }
     for(int y = 0 ; y < end ;y++){
@@ -478,58 +492,12 @@ Example $PASHR,POS,2,10,125410.00,5525.8138702,N,03833.9587380,E,131.555,1.0,0.0
       if(bufptr && *(++bufptr) != ',') bufptr = str_scanDec(bufptr, 0, 9, &sat[y].azimuth);
       if(bufptr && *(++bufptr) != ',') bufptr = str_scanDec(bufptr, 0, 9, &sat[y].snr);
     
-      _satellite_info->svid[y+(this_msg_num-1)*4]       = sat[y].svid;
+      _satellite_info->svid[y+(this_msg_num-1)*4]      = sat[y].svid;
       _satellite_info->used[y+(this_msg_num-1)*4]      = ((sat[y].snr>0)? true: false);
       _satellite_info->snr[y+(this_msg_num-1)*4]       = sat[y].snr;
       _satellite_info->elevation[y+(this_msg_num-1)*4] = sat[y].elevation;
       _satellite_info->azimuth[y+(this_msg_num-1)*4]   = sat[y].azimuth;
     }
-  }
-  else if((memcmp(_rx_buffer+3, "ZDA,",3) == 0)&&(uiCalcComma == 6)){
-    /*
-    UTC day, month, and year, and local time zone offset
-    An example of the ZDA message string is:
-
-    $GPZDA,172809.456,12,07,1996,00,00*45
-
-    ZDA message fields
-    Field	Meaning
-    0	Message ID $GPZDA
-    1	UTC
-    2	Day, ranging between 01 and 31
-    3	Month, ranging between 01 and 12
-    4	Year
-    5	Local time zone offset from GMT, ranging from 00 through ±13 hours
-    6	Local time zone offset from GMT, ranging from 00 through 59 minutes
-    7	The checksum data, always begins with *
-    Fields 5 and 6 together yield the total offset. For example, if field 5 is -5 and field 6 is +15, local time is 5 hours and 15 minutes earlier than GMT.     
-    */
-    float64_t nmea_time = 0.0;
-    int day = 0, month = 0,year = 0,local_time_off_hour = 0,local_time_off_min = 0; 
-    if(bufptr && *(++bufptr) != ',') bufptr = scanFloat64(bufptr, 0, 9, 9,&nmea_time);
-    if(bufptr && *(++bufptr) != ',') bufptr = str_scanDec(bufptr, 0, 9, &day);
-    if(bufptr && *(++bufptr) != ',') bufptr = str_scanDec(bufptr, 0, 9, &month);
-    if(bufptr && *(++bufptr) != ',') bufptr = str_scanDec(bufptr, 0, 9, &year);
-    if(bufptr && *(++bufptr) != ',') bufptr = str_scanDec(bufptr, 0, 9, &local_time_off_hour);
-    if(bufptr && *(++bufptr) != ',') bufptr = str_scanDec(bufptr, 0, 9, &local_time_off_min);
-
-
-    int nmea_hour = nmea_time/10000;
-    int nmea_minute = (nmea_time - nmea_hour*10000)/100;
-    float64_t nmea_sec = nmea_time - nmea_hour*10000 - nmea_minute*100;
-    //convert to unix timestamp
-    struct tm timeinfo;
-    timeinfo.tm_year = year - 1900;
-    timeinfo.tm_mon = month - 1; //7(July)
-    timeinfo.tm_mday = day;
-    timeinfo.tm_hour = nmea_hour;
-    timeinfo.tm_min = nmea_minute;
-    timeinfo.tm_sec = int(nmea_sec);
-    time_t epoch = mktime(&timeinfo);
-
-    _gps_position->time_gps_usec = (uint64_t)epoch * 1000000; //TODO: test this
-    _gps_position->time_gps_usec += (uint64_t)((nmea_sec - int(nmea_sec)) * 1e6);
-    _gps_position->timestamp_time = hrt_absolute_time();
   }
 
   return 0;
@@ -670,11 +638,11 @@ void NMEA::decode_init(void){
 
 //ashtech boad configuration script 
 //char comm[] = "$PASHS,NME,GGA,A,ON,0.1\r\n"
-char comm[] = "$PASHS,NME,GGA,B,OFF\r\n"\
+char comm[] = "$PASHS,NME,ZDA,B,ON,3\r\n"\
+        	  "$PASHS,NME,GGA,B,OFF\r\n"\
               "$PASHS,NME,GST,B,ON,3\r\n"\
               "$PASHS,NME,POS,B,ON,0.1\r\n"\
               "$PASHS,NME,GSV,B,ON,3\r\n"\
-              "$PASHS,NME,ZDA,B,ON,3\r\n"\
               "$PASHS,SPD,A,7\r\n"\
               "$PASHS,SPD,B,7\r\n"; // default baud is 7
 
