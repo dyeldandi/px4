@@ -88,29 +88,10 @@ _gps_position(gps_position)
     decode_init();  
     _decode_state = NME_DECODE_UNINIT;
     _rx_buffer_bytes = 0;
-/*
-    if (_fd_debug > 0) {
-#ifndef WIN32
-        warnx("Closing %d", _fd_debug);
-#endif
-        close(_fd_debug);
-    }
-    _fd_debug = open("/fs/microsd/gps_debug_nmea.bin", O_WRONLY | O_APPEND | O_CREAT );
-    if(_fd_debug > 0)
-      write(_fd_debug, "START\n",6);
-#ifndef WIN32
-    warnx("Got fd_debug %d", _fd_debug);
-#endif
-*/}
+}
 
 NMEA::~NMEA(){
-/*
-#ifndef WIN32
-  warnx("Closing %d", _fd_debug);
-#endif
-  if(_fd_debug > 0)
-    close(_fd_debug);
-*/}
+}
 //All NMEA descriptions are taken from 
 //http://www.trimble.com/OEM_ReceiverHelp/V4.44/en/NMEA-0183messages_MessageOverview.html
 int NMEA::handle_message(int len){
@@ -156,7 +137,7 @@ int NMEA::handle_message(int len){
       //convert to unix timestamp
       struct tm timeinfo;
       timeinfo.tm_year = year - 1900;
-      timeinfo.tm_mon = month - 1; //7(July)
+      timeinfo.tm_mon = month - 1;
       timeinfo.tm_mday = day;
       timeinfo.tm_hour = nmea_hour;
       timeinfo.tm_min = nmea_minute;
@@ -207,9 +188,8 @@ int NMEA::handle_message(int len){
     Note - If a user-defined geoid model, or an inclined
   */
       float64_t nmea_time = 0.0, lat = 0.0, lon = 0.0, alt = 0.0;
-      int num_of_sv = 0, fix_quality=0; //, dgps_time = 0, dgps_baseid=0;
+      int num_of_sv = 0, fix_quality=0;
       float64_t hdop = 99.9;
-      //float64_t height_of_Geoid = 0.0;
       char ns = '?', ew = '?';
 
       if(bufptr && *(++bufptr) != ',') bufptr = scanFloat64(bufptr, 0, 9, 9,&nmea_time);
@@ -235,9 +215,14 @@ int NMEA::handle_message(int len){
       if((lat == 0.0) && (lon == 0.0) && (alt = 0.0)){
         _gps_position->fix_type = 0;
       }
-      else
+      else if(fix_quality > 0){
+      	_gps_position->fix_type = fix_quality;
+      }
+      else{
         _gps_position->fix_type = 3;
-	    _gps_position->timestamp_position = hrt_absolute_time();
+      }
+
+	  _gps_position->timestamp_position = hrt_absolute_time();
 
       _gps_position->eph = hdop;     
       _gps_position->epv = hdop*1.5; //Just to work (empirical);
@@ -247,14 +232,14 @@ int NMEA::handle_message(int len){
       _gps_position->vel_e_m_s = 0;                                /**< GPS ground speed in m/s */
       _gps_position->vel_d_m_s = 0;                                /**< GPS ground speed in m/s */
       _gps_position->cog_rad = 0;                                  /**< Course over ground (NOT heading, but direction of movement) in rad, -PI..PI */
-      _gps_position->vel_ned_valid = true;                             /**< Flag to indicate if NED speed is valid */
+      _gps_position->vel_ned_valid = true;                         /**< Flag to indicate if NED speed is valid */
       _gps_position->c_variance_rad = 0.1;
       _gps_position->timestamp_velocity = hrt_absolute_time();
       return 1;
   }
   else if ((memcmp(_rx_buffer, "$PASHR,POS,", 11) == 0) && (uiCalcComma == 18)) {
   /*
-Example $PASHR,POS,2,10,125410.00,5525.8138702,N,03833.9587380,E,131.555,1.0,0.0,0.007,-0.001,2.0,1.0,1.7,1.0,*34
+	Example $PASHR,POS,2,10,125410.00,5525.8138702,N,03833.9587380,E,131.555,1.0,0.0,0.007,-0.001,2.0,1.0,1.7,1.0,*34
 
       $PASHR,POS,d1,d2,m3,m4,c5,m6,c7,f8,f9,f10,f11,f12,f13,f14,f15,f16,s17*cc 
       Parameter Description Range 
@@ -284,10 +269,9 @@ Example $PASHR,POS,2,10,125410.00,5525.8138702,N,03833.9587380,E,131.555,1.0,0.0
       */
       bufptr = (char*)( _rx_buffer+10);
       float64_t nmea_time = 0.0, lat = 0.0, lon = 0.0, alt = 0.0;
-      int num_of_sv = 0, fix_quality=0;// dgps_baseid=0;
+      int num_of_sv = 0, fix_quality=0;
       float64_t track_true = 0.0, ground_speed = 0.0 , age_of_corr = 0.0;
       float64_t hdop = 99.9, vdop = 99.9,  pdop = 99.9, tdop = 99.9,vertic_vel = 0.0;
-      //float64_t height_of_Geoid = 0.0;
       char ns = '?', ew = '?';
 
       if(bufptr && *(++bufptr) != ',') bufptr = str_scanDec(bufptr, 0, 9, &fix_quality);
@@ -318,13 +302,16 @@ Example $PASHR,POS,2,10,125410.00,5525.8138702,N,03833.9587380,E,131.555,1.0,0.0
       _rate_count_lat_lon++;
 
       if((lat == 0.0) && (lon == 0.0) && (alt = 0.0)){
-        _gps_position->fix_type = 0;
+    	  _gps_position->fix_type = 0;
       }
-      else
-        _gps_position->fix_type = 3;
-	    _gps_position->timestamp_position = hrt_absolute_time();
+      else if(fix_quality > 0){
+           _gps_position->fix_type = fix_quality;
+      }
+      else{
+         _gps_position->fix_type = 3;
+      }
 
-      _gps_position->fix_quality = fix_quality;
+      _gps_position->timestamp_position = hrt_absolute_time();
 
       _gps_position->eph = hdop;     
       _gps_position->epv = vdop;
@@ -335,17 +322,17 @@ Example $PASHR,POS,2,10,125410.00,5525.8138702,N,03833.9587380,E,131.555,1.0,0.0
       double track_rad = track_true * m_pi / 180.0;
 
 	  	double velocity_ms = ground_speed  / 3.6;
-		  double velocity_north = velocity_ms * cos(track_rad);
-		  double velocity_east  = velocity_ms * sin(track_rad);
+		double velocity_north = velocity_ms * cos(track_rad);
+		double velocity_east  = velocity_ms * sin(track_rad);
 
-		  _gps_position->vel_m_s = velocity_ms;                                  /**< GPS ground speed (m/s) */
-		  _gps_position->vel_n_m_s = velocity_north;                                /**< GPS ground speed in m/s */
-		  _gps_position->vel_e_m_s = velocity_east;                                /**< GPS ground speed in m/s */
-		  _gps_position->vel_d_m_s = -vertic_vel*0.1;                                /**< GPS ground speed in m/s */
-		  _gps_position->cog_rad = track_rad;                                  /**< Course over ground (NOT heading, but direction of movement) in rad, -PI..PI */
-		  _gps_position->vel_ned_valid = true;                             /**< Flag to indicate if NED speed is valid */
-		  _gps_position->c_variance_rad = 0.1;
-		  _gps_position->timestamp_velocity = hrt_absolute_time();
+		_gps_position->vel_m_s = velocity_ms;                            /**< GPS ground speed (m/s) */
+		_gps_position->vel_n_m_s = velocity_north;                       /**< GPS ground speed in m/s */
+		_gps_position->vel_e_m_s = velocity_east;                        /**< GPS ground speed in m/s */
+		_gps_position->vel_d_m_s = -vertic_vel*0.1;                      /**< GPS ground speed in m/s */
+		_gps_position->cog_rad = track_rad;                              /**< Course over ground (NOT heading, but direction of movement) in rad, -PI..PI */
+		_gps_position->vel_ned_valid = true;                             /**< Flag to indicate if NED speed is valid */
+		_gps_position->c_variance_rad = 0.1;
+		_gps_position->timestamp_velocity = hrt_absolute_time();
       return 1;
 
   }
@@ -480,11 +467,10 @@ Example $PASHR,POS,2,10,125410.00,5525.8138702,N,03833.9587380,E,131.555,1.0,0.0
 
     int end = 4;
     if(this_msg_num == all_msg_num){
-    end =  tot_sv_visible - (this_msg_num-1)*4;
-      //_gps_position->satellite_info_available = 1;
-      _gps_position->satellites_used = tot_sv_visible;
-      _satellite_info->count = SAT_INFO_MAX_SATELLITES;
-      _satellite_info->timestamp = hrt_absolute_time();
+    	end =  tot_sv_visible - (this_msg_num-1)*4;
+    	_gps_position->satellites_used = tot_sv_visible;
+    	_satellite_info->count = SAT_INFO_MAX_SATELLITES;
+    	_satellite_info->timestamp = hrt_absolute_time();
     }
     for(int y = 0 ; y < end ;y++){
       if(bufptr && *(++bufptr) != ',') bufptr = str_scanDec(bufptr, 0, 9, &sat[y].svid);
@@ -560,11 +546,6 @@ int NMEA::receive(unsigned timeout){
                  * available, we'll go back to poll() again...
                  */
                 count = ::read(_fd, buf, sizeof(buf));
-//                if(count){
-//                  write(_fd_debug, buf, count);
-//                  fsync(_fd_debug);
-//                }
-
             }
         }
     }
