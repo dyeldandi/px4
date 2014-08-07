@@ -92,8 +92,8 @@ _gps_position(gps_position)
 
 ASHTECH::~ASHTECH(){
 }
-//All ASHTECH descriptions are taken from
-//http://www.trimble.com/OEM_ReceiverHelp/V4.44/en/ASHTECH-0183messages_MessageOverview.html
+//All NMEA descriptions are taken from
+//http://www.trimble.com/OEM_ReceiverHelp/V4.44/en/NMEA-0183messages_MessageOverview.html
 int ASHTECH::handle_message(int len){
   if(len < 7) return 0;
   int uiCalcComma = 0;
