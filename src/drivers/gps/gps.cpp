@@ -69,7 +69,7 @@
 
 #include "ubx.h"
 #include "mtk.h"
-#include "nmea.h"
+#include "ashtech.h"
 
 
 #define TIMEOUT_5HZ 500
@@ -342,9 +342,9 @@ GPS::task_main()
 				_Helper = new MTK(_serial_fd, &_report_gps_pos);
 				break;
 
-			case GPS_DRIVER_MODE_NMEA:
+			case GPS_DRIVER_MODE_ASHTECH:
 
-				_Helper = new NMEA(_serial_fd, &_report_gps_pos, _p_report_sat_info);
+				_Helper = new ASHTECH(_serial_fd, &_report_gps_pos, _p_report_sat_info);
 				break;
 
 			default:
@@ -408,8 +408,8 @@ GPS::task_main()
 							mode_str = "MTK";
 							break;
 
-					case GPS_DRIVER_MODE_NMEA:
-						mode_str = "NMEA";
+					case GPS_DRIVER_MODE_ASHTECH:
+						mode_str = "ASHTECH";
 						break;
 
 						default:
@@ -439,10 +439,10 @@ GPS::task_main()
 				break;
 
 			case GPS_DRIVER_MODE_MTK:
-			_mode = GPS_DRIVER_MODE_NMEA;
+			_mode = GPS_DRIVER_MODE_ASHTECH;
 			break;
 
-		case GPS_DRIVER_MODE_NMEA:
+		case GPS_DRIVER_MODE_ASHTECH:
 				_mode = GPS_DRIVER_MODE_UBX;
 				break;
 
@@ -489,8 +489,8 @@ GPS::print_info()
 		warnx("protocol: MTK");
 		break;
 
-	case GPS_DRIVER_MODE_NMEA:
-		warnx("protocol: NMEA");
+	case GPS_DRIVER_MODE_ASHTECH:
+		warnx("protocol: ASHTECH");
 		break;
 
 	default:
