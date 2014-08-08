@@ -1,29 +1,16 @@
 #include "ashtech.h"
-#ifdef WIN32
-  #include <stdio.h>
-  #include <io.h>
-  #include <string.h>
-  #include <time.h>
-  uint64_t hrt_absolute_time()
-  {
-    return 0;
-  }
-  int GPS_Helper::set_baudrate(int const &,unsigned int){
-    return 0;
-  }
-#else
-  #include <unistd.h>
-  #include <stdio.h>
-  #include <poll.h>
-  #include <math.h>
-  #include <string.h>
-  #include <assert.h>
-  #include <systemlib/err.h>
-  #include <uORB/uORB.h>
-  #include <uORB/topics/vehicle_gps_position.h>
-  #include <uORB/topics/satellite_info.h>
-  #include <drivers/drv_hrt.h>
-#endif
+
+#include <unistd.h>
+#include <stdio.h>
+#include <poll.h>
+#include <math.h>
+#include <string.h>
+#include <assert.h>
+#include <systemlib/err.h>
+#include <uORB/uORB.h>
+#include <uORB/topics/vehicle_gps_position.h>
+#include <uORB/topics/satellite_info.h>
+#include <drivers/drv_hrt.h>
 
 #include <fcntl.h>
 #include <math.h>
