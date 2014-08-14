@@ -211,9 +211,6 @@ int ASHTECH::handle_message(int len){
 
 	  _gps_position->timestamp_position = hrt_absolute_time();
 
-      _gps_position->eph = hdop;     
-      _gps_position->epv = hdop*1.5; //Just to work (empirical);
-
       _gps_position->vel_m_s = 0;                                  /**< GPS ground speed (m/s) */
       _gps_position->vel_n_m_s = 0;                                /**< GPS ground speed in m/s */
       _gps_position->vel_e_m_s = 0;                                /**< GPS ground speed in m/s */
@@ -299,10 +296,6 @@ int ASHTECH::handle_message(int len){
       }
 
       _gps_position->timestamp_position = hrt_absolute_time();
-
-      _gps_position->eph = hdop;     
-      _gps_position->epv = vdop;
-
    
       const float64_t m_pi  = 3.14159265;
 
@@ -359,6 +352,9 @@ int ASHTECH::handle_message(int len){
       if(bufptr && *(++bufptr) != ',') bufptr = scanFloat64(bufptr, 0, 9, 9,&lat_err);
       if(bufptr && *(++bufptr) != ',') bufptr = scanFloat64(bufptr, 0, 9, 9,&lon_err);
       if(bufptr && *(++bufptr) != ',') bufptr = scanFloat64(bufptr, 0, 9, 9,&alt_err);
+
+      _gps_position->eph = sqrt(lat_err*lat_err +lon_err*lon_err);
+      _gps_position->epv = alt_err;
 
       _gps_position->s_variance_m_s = 0;
       _gps_position->timestamp_variance = hrt_absolute_time();

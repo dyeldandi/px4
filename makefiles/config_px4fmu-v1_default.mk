@@ -33,9 +33,9 @@ MODULES		+= drivers/hott/hott_sensors
 MODULES		+= drivers/blinkm
 MODULES		+= drivers/rgbled
 MODULES		+= drivers/mkblctrl
-#MODULES		+= drivers/airspeed
-#MODULES		+= drivers/ets_airspeed
-#MODULES		+= drivers/meas_airspeed
+MODULES		+= drivers/airspeed
+MODULES		+= drivers/ets_airspeed
+MODULES		+= drivers/meas_airspeed
 MODULES		+= drivers/frsky_telemetry
 MODULES		+= modules/sensors
 
@@ -76,8 +76,8 @@ MODULES		+= modules/position_estimator_inav
 #
 # Vehicle Control
 #
-#MODULES		+= modules/fw_pos_control_l1
-#MODULES		+= modules/fw_att_control
+MODULES		+= modules/fw_pos_control_l1
+MODULES		+= modules/fw_att_control
 MODULES		+= modules/mc_att_control
 MODULES		+= modules/mc_pos_control
 
