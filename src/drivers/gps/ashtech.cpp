@@ -199,15 +199,11 @@ int ASHTECH::handle_message(int len){
       _gps_position->alt = alt*1000;
       _rate_count_lat_lon++;
 
-      if((lat == 0.0) && (lon == 0.0) && (alt = 0.0)){
+      if((lat == 0.0) && (lon == 0.0) && (alt == 0.0)){
         _gps_position->fix_type = 0;
       }
-      else if(fix_quality > 0){
-      	_gps_position->fix_type = fix_quality;
-      }
-      else{
-        _gps_position->fix_type = 3;
-      }
+      else
+        _gps_position->fix_type = 3 + fix_quality;
 
 	  _gps_position->timestamp_position = hrt_absolute_time();
 
@@ -285,15 +281,11 @@ int ASHTECH::handle_message(int len){
       _gps_position->alt = alt*1000;
       _rate_count_lat_lon++;
 
-      if((lat == 0.0) && (lon == 0.0) && (alt = 0.0)){
+      if((lat == 0.0) && (lon == 0.0) && (alt == 0.0)){
     	  _gps_position->fix_type = 0;
       }
-      else if(fix_quality > 0){
-           _gps_position->fix_type = fix_quality;
-      }
-      else{
-         _gps_position->fix_type = 3;
-      }
+      else
+         _gps_position->fix_type = 3 + fix_quality;
 
       _gps_position->timestamp_position = hrt_absolute_time();
    
