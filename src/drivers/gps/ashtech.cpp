@@ -300,7 +300,7 @@ int ASHTECH::handle_message(int len){
 		_gps_position->vel_m_s = velocity_ms;                            /**< GPS ground speed (m/s) */
 		_gps_position->vel_n_m_s = velocity_north;                       /**< GPS ground speed in m/s */
 		_gps_position->vel_e_m_s = velocity_east;                        /**< GPS ground speed in m/s */
-		_gps_position->vel_d_m_s = -vertic_vel*0.1;                      /**< GPS ground speed in m/s */
+		_gps_position->vel_d_m_s = -vertic_vel;                      /**< GPS ground speed in m/s */
 		_gps_position->cog_rad = track_rad;                              /**< Course over ground (NOT heading, but direction of movement) in rad, -PI..PI */
 		_gps_position->vel_ned_valid = true;                             /**< Flag to indicate if NED speed is valid */
 		_gps_position->c_variance_rad = 0.1;
@@ -599,7 +599,7 @@ char comm[] = "$PASHS,NME,ZDA,B,ON,3\r\n"\
               "$PASHS,NME,GST,B,ON,3\r\n"\
               "$PASHS,NME,POS,B,ON,0.1\r\n"\
               "$PASHS,NME,GSV,B,ON,3\r\n"\
-              "$PASHS,SPD,A,7\r\n"\
+              "$PASHS,SPD,A,8\r\n"\
               "$PASHS,SPD,B,7\r\n"; // default baud is 7
 
 int ASHTECH::configure(unsigned &baudrate){
