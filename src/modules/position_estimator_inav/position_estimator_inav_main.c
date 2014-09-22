@@ -193,10 +193,10 @@ static void write_debug_log(const char *msg, float dt, float x_est[2], float y_e
                               (double)x_est[0], (double)x_est[1], (double)y_est[0], (double)y_est[1], (double)z_est[0], (double)z_est[1],
                               (double)x_est_prev[0], (double)x_est_prev[1], (double)y_est_prev[0], (double)y_est_prev[1], (double)z_est_prev[0], (double)z_est_prev[1]);
 		fwrite(s, 1, n, f);
-		n = snprintf(s, 256, "\tacc=[%.5f %.5f %.5f] gps_pos_corr=[%.5f %.5f %.5f] gps_vel_corr=[%.5f %.5f %.5f] w_xy_gps_p=%.5f w_xy_gps_v=%.5f\n",
+		n = snprintf(s, 256, "\tacc=[%.5f %.5f %.5f] gps_pos_corr=[%.5f %.5f %.5f] gps_vel_corr=[%.5f %.5f %.5f] w_xy_gps_p=%.5f w_xy_gps_v=%.5f w_z_gps_p=%.5f w_z_gps_v=%.5f\n",
                      (double)acc[0], (double)acc[1], (double)acc[2],
                      (double)corr_gps[0][0], (double)corr_gps[1][0], (double)corr_gps[2][0], (double)corr_gps[0][1], (double)corr_gps[1][1], (double)corr_gps[2][1],
-                     (double)w_xy_gps_p, (double)w_xy_gps_v);
+                     (double)w_xy_gps_p, (double)w_xy_gps_v, (double)w_z_gps_p, (double)w_z_gps_v);
 		fwrite(s, 1, n, f);
 		free(s);
 	}
@@ -861,6 +861,8 @@ int position_estimator_inav_thread_main(int argc, char *argv[])
 		if (use_flow && flow_accurate) {
 			w_xy_gps_p *= params.w_gps_flow;
 			w_xy_gps_v *= params.w_gps_flow;
+			w_z_gps_p *= params.w_gps_flow;
+			w_z_gps_v *= params.w_gps_flow;
 		}
 
 		/* baro offset correction */
