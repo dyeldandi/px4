@@ -292,6 +292,7 @@ int parameters_init(struct position_estimator_inav_param_handles *h)
 {
 	h->w_z_baro = param_find("INAV_W_Z_BARO");
 	h->w_z_gps_p = param_find("INAV_W_Z_GPS_P");
+	h->w_z_gps_v = param_find("INAV_W_Z_GPS_V");
 	h->w_z_vision_p = param_find("INAV_W_Z_VIS_P");
 	h->w_z_sonar = param_find("INAV_W_Z_SONAR");
 	h->w_xy_gps_p = param_find("INAV_W_XY_GPS_P");
