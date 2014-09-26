@@ -713,8 +713,6 @@ int position_estimator_inav_thread_main(int argc, char *argv[])
 							x_est[1] = gps.vel_n_m_s;
 							y_est[0] = 0.0f;
 							y_est[1] = gps.vel_e_m_s;
-							z_est[0] = 0.0f;
-							z_est[1] = gps.vel_d_m_s;
 
 							local_pos.ref_lat = lat;
 							local_pos.ref_lon = lon;
@@ -739,8 +737,6 @@ int position_estimator_inav_thread_main(int argc, char *argv[])
 							x_est[1] = gps.vel_n_m_s;
 							y_est[0] = gps_proj[1];
 							y_est[1] = gps.vel_e_m_s;
-							z_est[0] = alt;
-							z_est[1] = gps.vel_d_m_s;
 
 						}
 
@@ -866,7 +862,6 @@ int position_estimator_inav_thread_main(int argc, char *argv[])
 		/* baro offset correction */
 		if (use_gps_z) {
 			float offs_corr = corr_gps[2][0] * w_z_gps_p * dt;
-			offs_corr -= corr_gps[2][1] * w_z_gps_v;
 			baro_offset += offs_corr;
 			corr_baro += offs_corr;
 		}
