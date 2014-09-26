@@ -64,9 +64,9 @@ PARAM_DEFINE_FLOAT(INAV_W_Z_BARO, 0.5f);
 PARAM_DEFINE_FLOAT(INAV_W_Z_GPS_P, 0.005f);
 
 /**
- * Z axis weight for GPS
+ * Z velocity weight for GPS
  *
- * Weight (cutoff frequency) for GPS altitude measurements. GPS altitude data is very noisy and should be used only as slow correction for baro offset.
+ * Weight (cutoff frequency) for GPS altitude velocity measurements.
  *
  * @min 0.0
  * @max 10.0
