@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2014 PX4 Development Team. All rights reserved.
+ *   Copyright (C) 2012-2013 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,7 +17,7 @@
  *    without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * AS IS AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
  * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
  * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
@@ -32,89 +32,38 @@
  ****************************************************************************/
 
 /**
- * @file navigator_params.c
+ * @file multirotor_motor_limits.h
  *
- * Parameters for navigator in general
- *
- * @author Julian Oes <julian@oes.ch>
- * @author Thomas Gubler <thomasgubler@gmail.com>
+ * Definition of multirotor_motor_limits  topic
  */
 
-#include <nuttx/config.h>
+#ifndef MULTIROTOR_MOTOR_LIMITS_H_
+#define MULTIROTOR_MOTOR_LIMITS_H_
 
-#include <systemlib/param/param.h>
+#include "../uORB.h"
+#include <stdint.h>
 
 /**
- * Loiter radius (FW only)
- *
- * Default value of loiter radius for missions, loiter, RTL, etc. (fixedwing only).
- *
- * @unit meters
- * @min 0.0
- * @group Mission
+ * @addtogroup topics
+ * @{
  */
-PARAM_DEFINE_FLOAT(NAV_LOITER_RAD, 50.0f);
 
 /**
- * Acceptance Radius
- *
- * Default acceptance radius, overridden by acceptance radius of waypoint if set.
- *
- * @unit meters
- * @min 1.0
- * @group Mission
+ * Motor limits
  */
-PARAM_DEFINE_FLOAT(NAV_ACC_RAD, 25.0f);
+struct multirotor_motor_limits_s {
+        uint8_t roll_pitch	: 1; // roll/pitch limit reached
+        uint8_t yaw		: 1; // yaw limit reached
+        uint8_t throttle_lower	: 1; // lower throttle limit reached
+        uint8_t throttle_upper	: 1; // upper throttle limit reached
+        uint8_t reserved	: 4;
+};
 
 /**
- * Set OBC mode for data link loss
- *
- * If set to 1 the behaviour on data link loss is set to a mode according to the OBC rules
- *
- * @min 0
- * @group Mission
+ * @}
  */
-PARAM_DEFINE_INT32(NAV_DLL_OBC, 0);
 
-/**
- * Set OBC mode for rc loss
- *
- * If set to 1 the behaviour on data link loss is set to a mode according to the OBC rules
- *
- * @min 0
- * @group Mission
- */
-PARAM_DEFINE_INT32(NAV_RCL_OBC, 0);
+/* register this as object request broker structure */
+ORB_DECLARE(multirotor_motor_limits);
 
-/**
- * Airfield home Lat
- *
- * Latitude of airfield home waypoint
- *
- * @unit degrees * 1e7
- * @min 0.0
- * @group DLL
- */
-PARAM_DEFINE_INT32(NAV_AH_LAT, -265847810);
-
-/**
- * Airfield home Lon
- *
- * Longitude of airfield home waypoint
- *
- * @unit degrees * 1e7
- * @min 0.0
- * @group DLL
- */
-PARAM_DEFINE_INT32(NAV_AH_LON, 1518423250);
-
-/**
- * Airfield home alt
- *
- * Altitude of airfield home waypoint
- *
- * @unit m
- * @min 0.0
- * @group DLL
- */
-PARAM_DEFINE_FLOAT(NAV_AH_ALT, 600.0f);
+#endif
